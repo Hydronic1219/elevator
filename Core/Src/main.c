@@ -53,6 +53,53 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  // [Received input Event]
+  // #1.Photo Event : 1F(GPIO_PIN_XX), 2F(GPIO_PIN_XX), 3F(GPIO_PIN_XX)
+  //    ==> ? 확인
+  // #2.Button Event : 1F(GPIO_PIN_8), 2F(GPIO_PIN_6), 3F(GPIO_PIN_5)
+  //    ==> ? Toggle On 상태 정보 기억
+  // #3.Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
+
+
+  // [ELEVATOR_STATE_INIT 현재 상태에 따른 이동]
+  // #1.if (current_elevator_state == ELEVATOR_STATE_INIT)
+  //    1.1
+
+
+  // [ELEVATOR_STATE_MOVING 현재 상태에 따른 이동]
+  // #2. else if (current_elevator_state == ELEVATOR_STATE_MOVING)
+  //    2.1 - [SKIP] Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
+  //    2.2 - [UP] & Photo Event[1F, 2F, 3F]
+  //          -> 2.2.1 (true)[1F] & Button [1F] On (GPIO_PIN_8)
+  //             ==> LCD output("1F")
+  //             ==> Door Open
+  //             ==> current_elevator_state = ELEVATOR_STATE_STOP & Return //상태변경
+  //          -> 2.2.1 (false) [1F] & Button [1F] Off (GPIO_PIN_8)
+  //             ==> LCD output("1F")
+  //    2.3 - [Down] & Photo Event[1F, 2F, 3F]
+  //          -> 2.3.1 (true)[1F] & Button [1F] On (GPIO_PIN_8)
+  //             ==> LCD output("1F")
+  //             ==> Door Open
+  //             ==> current_elevator_state = ELEVATOR_STATE_STOP & Return //상태변경
+  //          -> 2.3.1 (false) [1F] & Button [1F] Off (GPIO_PIN_8)
+  //             ==> LCD output("1F")
+
+  // [ELEVATOR_STATE_STOP 현재 상태에 따른 이동]
+  // #3. else if (current_elevator_state == ELEVATOR_STATE_STOP)
+  //    3.1 - Door close & UP & Photo Event[1F, 2F, 3F]
+  //            ==>
+  //    3.2 - Door close & up & Photo Event[1F, 2F, 3F]
+  //            ==>
+  //    3.3 - Door open & up & Photo Event[1F, 2F, 3F]
+  //            ==>
+  //    3.4 - Door close & Down & Photo Event[1F, 2F, 3F]
+  //            ==>
+  //
+
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -92,6 +139,7 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   MX_TIM3_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */

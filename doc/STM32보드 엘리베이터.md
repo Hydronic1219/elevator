@@ -12,8 +12,8 @@ gantt
     dateFormat  YYYY-MM-DD
     
     section 프로젝트 단계
-    설계    : 2023-06-19, 1d
-    개발    : 2023-06-20, 4d
+    설계(신종섭,한상진)    : 2023-06-19, 1d
+    개발(진영제,강현웅)    : 2023-06-20, 4d
     검증    : 2023-06-24, 1d
     
     section 개발 상세
@@ -34,6 +34,24 @@ gantt
 1. **초기상태(Power On)** - 시스템이 시작되는 초기 상태
 2. **운행중상태** - 엘리베이터가 이동 중인 상태
 3. **정지중상태** - 엘리베이터가 멈춰있는 상태
+
+``` C
+enum ELEVATOR_STATE{
+  ELEVATOR_STATE_INIT,
+  ELEVATOR_STATE_MOVING,
+  ELEVATOR_STATE_STOP,
+};
+
+
+[Received input Event]
+#1.Photo Event : 1F(GPIO_PIN_XX), 2F(GPIO_PIN_XX), 3F(GPIO_PIN_XX)
+  ==> ? 확인
+#2.Button Event : 1F(GPIO_PIN_XX), 2F(GPIO_PIN_XX), 3F(GPIO_PIN_XX)
+  ==> ? Toggle On 상태 정보 기억
+#3.Door open/close : Open (GPIO_PIN_XX), Close (GPIO_PIN_XX)
+```
+
+
 
 
 ## 초기상태 다이어그램

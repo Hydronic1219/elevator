@@ -2,6 +2,8 @@
 
 9999_elevator.launch
 
-.settings
+.settings/
 .settings/stm32cubeide.project.prefs
 .settings/language.settings.xml
+.cproject
+.cproject
