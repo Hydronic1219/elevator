@@ -26,6 +26,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "stdbool.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,51 +55,147 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+
+enum ELEVATOR_STATE{
+  ELEVATOR_STATE_INIT_PROGRESS,
+  ELEVATOR_STATE_INIT_COMPLETE,
+  ELEVATOR_STATE_MOVING,
+  ELEVATOR_STATE_STOP
+};
+
+enum DOOR_STATE{
+  DOOR_STATE_CLOSED,
+  DOOR_STATE_OPENED,
+};
+
+enum BUTTON_STATE{
+  BUTTON_STATE_ON,
+  BUTTON_STATE_OFF,
+};
+
+enum MOVE_STATE{
+  MOVE_STATE_UP,
+  MOVE_STATE_DOWN,
+};
+
+enum ELEVATOR_STATE current_elevator_state;
+enum DOOR_STATE current_door_state;
+enum BUTTON_STATE current_1f_state;
+enum BUTTON_STATE current_2f_state;
+enum BUTTON_STATE current_3f_state;
+enum MOVE_STATE current_move_state;
+
+void elevator_state_init_progress(){
+  current_elevator_state = ELEVATOR_STATE_INIT_PROGRESS;
+  current_door_state = DOOR_STATE_CLOSED;
+
+  current_1f_state =BUTTON_STATE_OFF;
+  current_2f_state =BUTTON_STATE_OFF;
+  current_3f_state =BUTTON_STATE_OFF;
+
+  current_move_state = MOVE_STATE_DOWN;
+}
+
+
+void elevator_state_init_complete(){
+  current_elevator_state = ELEVATOR_STATE_INIT_COMPLETE;
+  current_door_state = DOOR_STATE_CLOSED;
+
+  current_1f_state =BUTTON_STATE_OFF;
+  current_2f_state =BUTTON_STATE_OFF;
+  current_3f_state =BUTTON_STATE_OFF;
+
+  current_move_state = MOVE_STATE_DOWN;
+}
+
+
+void elevator_state_stop_transition(){
+  current_elevator_state = ELEVATOR_STATE_STOP;
+  current_door_state = DOOR_STATE_CLOSED;
+
+  current_1f_state =BUTTON_STATE_OFF;
+  current_2f_state =BUTTON_STATE_OFF;
+  current_3f_state =BUTTON_STATE_OFF;
+
+  current_move_state = MOVE_STATE_DOWN;
+}
+
+
+void check_init_elevator_state(uint16_t GPIO_Pin)
 {
   // [Received input Event]
-  // #1.Photo Event : 1F(GPIO_PIN_XX), 2F(GPIO_PIN_XX), 3F(GPIO_PIN_XX)
+  // #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
   //    ==> ? 확인
   // #2.Button Event : 1F(GPIO_PIN_8), 2F(GPIO_PIN_6), 3F(GPIO_PIN_5)
   //    ==> ? Toggle On 상태 정보 기억
   // #3.Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
 
+  // 상태 종료 이동  조건  ELEVATOR_STATE_STOP
+  /* if(GPIO_Pin == GPIO_PIN_10) */
+  bool is_elevator_stop_transition_allowed = (GPIO_Pin == GPIO_PIN_10);
+  if(is_elevator_stop_transition_allowed)
+  {
+    elevator_state_stop_transition();
+  }
 
-  // [ELEVATOR_STATE_INIT 현재 상태에 따른 이동]
-  // #1.if (current_elevator_state == ELEVATOR_STATE_INIT)
-  //    1.1
+}
 
 
-  // [ELEVATOR_STATE_MOVING 현재 상태에 따른 이동]
-  // #2. else if (current_elevator_state == ELEVATOR_STATE_MOVING)
-  //    2.1 - [SKIP] Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
-  //    2.2 - [UP] & Photo Event[1F, 2F, 3F]
-  //          -> 2.2.1 (true)[1F] & Button [1F] On (GPIO_PIN_8)
-  //             ==> LCD output("1F")
-  //             ==> Door Open
-  //             ==> current_elevator_state = ELEVATOR_STATE_STOP & Return //상태변경
-  //          -> 2.2.1 (false) [1F] & Button [1F] Off (GPIO_PIN_8)
-  //             ==> LCD output("1F")
-  //    2.3 - [Down] & Photo Event[1F, 2F, 3F]
-  //          -> 2.3.1 (true)[1F] & Button [1F] On (GPIO_PIN_8)
-  //             ==> LCD output("1F")
-  //             ==> Door Open
-  //             ==> current_elevator_state = ELEVATOR_STATE_STOP & Return //상태변경
-  //          -> 2.3.1 (false) [1F] & Button [1F] Off (GPIO_PIN_8)
-  //             ==> LCD output("1F")
+ void check_moving_elevator_state(uint16_t GPIO_Pin){
+   // [ELEVATOR_STATE_MOVING 현재 상태에 따른 이동]
+   // #2. else if (current_elevator_state == ELEVATOR_STATE_MOVING)
+   //    2.1 - [SKIP] Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
+   //    2.2 - [UP] & Photo Event[1F, 2F, 3F]
+   //          -> 2.2.1 (true)[1F] & Button [1F] On (GPIO_PIN_8)
+   //             ==> LCD output("1F")
+   //             ==> Door Open
+   //             ==> current_elevator_state = ELEVATOR_STATE_STOP & Return //상태변경
+   //          -> 2.2.1 (false) [1F] & Button [1F] Off (GPIO_PIN_8)
+   //             ==> LCD output("1F")
+   //    2.3 - [Down] & Photo Event[1F, 2F, 3F]
+   //          -> 2.3.1 (true)[1F] & Button [1F] On (GPIO_PIN_8)
+   //             ==> LCD output("1F")
+   //             ==> Door Open
+   //             ==> current_elevator_state = ELEVATOR_STATE_STOP & Return //상태변경
+   //          -> 2.3.1 (false) [1F] & Button [1F] Off (GPIO_PIN_8)
+   //             ==> LCD output("1F")
+ }
 
-  // [ELEVATOR_STATE_STOP 현재 상태에 따른 이동]
-  // #3. else if (current_elevator_state == ELEVATOR_STATE_STOP)
-  //    3.1 - Door close & UP & Photo Event[1F, 2F, 3F]
-  //            ==>
-  //    3.2 - Door close & up & Photo Event[1F, 2F, 3F]
-  //            ==>
-  //    3.3 - Door open & up & Photo Event[1F, 2F, 3F]
-  //            ==>
-  //    3.4 - Door close & Down & Photo Event[1F, 2F, 3F]
-  //            ==>
-  //
+ void check_stop_elevator_state(uint16_t GPIO_Pin){
+   // [ELEVATOR_STATE_STOP 현재 상태에 따른 이동]
+   // #3. else if (current_elevator_state == ELEVATOR_STATE_STOP)
+   //    3.1 - Door close & UP & Photo Event[1F, 2F, 3F]
+   //            ==>
+   //    3.2 - Door close & up & Photo Event[1F, 2F, 3F]
+   //            ==>
+   //    3.3 - Door open & up & Photo Event[1F, 2F, 3F]
+   //            ==>
+   //    3.4 - Door close & Down & Photo Event[1F, 2F, 3F]
+   //            ==>
+   //
+ }
 
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  // [Received input Event]
+  // #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
+  //    ==> ? 확인
+  // #2.Button Event : 1F(GPIO_PIN_8), 2F(GPIO_PIN_6), 3F(GPIO_PIN_5)
+  //    ==> ? Toggle On 상태 정보 기억
+  // #3.Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
+
+  if(current_elevator_state == ELEVATOR_STATE_INIT_COMPLETE){
+    // error case... 호출되면 뭔가 잘못됐음.
+    check_init_elevator_state(GPIO_Pin);
+  }else if (current_elevator_state == ELEVATOR_STATE_MOVING){
+    check_moving_elevator_state(GPIO_Pin);
+  }else if (current_elevator_state == ELEVATOR_STATE_STOP){
+    check_stop_elevator_state(GPIO_Pin);
+  }else{
+    // error case... 호출되면 뭔가 잘못됐음.
+    //
+  }
 }
 
 /* USER CODE END PFP */
@@ -142,17 +240,34 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
 
+  // 초기 설정값 넣기
+  elevator_state_init_progress();
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // 샘플 코드
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET);
-	  HAL_Delay(300);
-	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
-	  HAL_Delay(300);
+    if (current_elevator_state == ELEVATOR_STATE_INIT_PROGRESS){
+      //...
+
+      // 작성
+      //door_close();
+      //current_door_state = DOOR_STATE_CLOSED;
+
+      // 작성
+      //elevator_move_down();
+      //current_move_state = MOVE_STATE_DOWN;
+
+      elevator_state_init_complete();
+
+    }
+//    else if(current_elevator_state == ELEVATOR_STATE_MOVING)
+//    {
+//      //door_close;
+//    }
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

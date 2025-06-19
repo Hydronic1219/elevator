@@ -44,11 +44,12 @@ enum ELEVATOR_STATE{
 
 
 [Received input Event]
-#1.Photo Event : 1F(GPIO_PIN_XX), 2F(GPIO_PIN_XX), 3F(GPIO_PIN_XX)
-  ==> ? 확인
-#2.Button Event : 1F(GPIO_PIN_XX), 2F(GPIO_PIN_XX), 3F(GPIO_PIN_XX)
-  ==> ? Toggle On 상태 정보 기억
-#3.Door open/close : Open (GPIO_PIN_XX), Close (GPIO_PIN_XX)
+#1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
+   ==> ? 확인
+#2.Button Event : 1F(GPIO_PIN_8), 2F(GPIO_PIN_6), 3F(GPIO_PIN_5)
+   ==> ? Toggle On 상태 정보 기억
+#3.Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
+
 ```
 
 
