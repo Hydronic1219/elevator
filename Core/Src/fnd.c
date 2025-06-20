@@ -2,15 +2,15 @@
 #include "fnd.h"
 
 
-FND_CONTROL fnd[8] =
+FND_CONTROL fnd[7] =
 	{
-			{GPIOC, GPIO_PIN_9, 1 , 0},  //7
-			{GPIOB, GPIO_PIN_8, GPIO_PIN_SET , GPIO_PIN_RESET},  //6
-			{GPIOB, GPIO_PIN_9, GPIO_PIN_SET , GPIO_PIN_RESET},  //4
-			{GPIOA, GPIO_PIN_5, GPIO_PIN_SET , GPIO_PIN_RESET},  //2
-			{GPIOA, GPIO_PIN_6, GPIO_PIN_SET , GPIO_PIN_RESET},	 //1
-			{GPIOA, GPIO_PIN_7, GPIO_PIN_SET , GPIO_PIN_RESET},  //9
-			{GPIOC, GPIO_PIN_7, GPIO_PIN_SET , GPIO_PIN_RESET},  //10
+			{GPIOC, GPIO_PIN_9, 0 , 1},  //7
+			{GPIOB, GPIO_PIN_8, 0 , 1},  //6
+			{GPIOB, GPIO_PIN_9, 0 , 1},  //4
+			{GPIOA, GPIO_PIN_5, 0 , 1},  //2
+			{GPIOA, GPIO_PIN_6, 0 , 1},	 //1
+			{GPIOA, GPIO_PIN_7, 0 , 1},  //9
+			{GPIOC, GPIO_PIN_11, 0 , 1},  //10
 	};
 
 

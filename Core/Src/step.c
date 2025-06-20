@@ -16,6 +16,12 @@ static const uint8_t HALF_STEP[8][4]=
 		{1, 0, 0, 1}
 };
 
+volatile uint8_t stopFlag = 0;
+
+void stopStepper()
+{
+	stopFlag = 1;
+}
 
 void stepMotor(uint8_t step)
 {
@@ -33,6 +39,7 @@ void rotateSteps(uint16_t steps, uint8_t direction) // 반시계 위로 시계 �
 {
 	for(uint16_t i = 0; i < steps; i++)
 	{
+		if (stopFlag) break;
 		//회전방향에 따라 스텝패턴
 		uint8_t step;
 		if(direction == DIR_CW)

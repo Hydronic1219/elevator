@@ -26,6 +26,8 @@
 #define IN4_Pin					GPIO_PIN_13
 #define IN4_GPIO_Port			GPIOB
 
+void stopStepper();
+
 void stepMotor(uint8_t step);
 void rotateSteps(uint16_t steps, uint8_t direction);
 void rotateDegrees(uint16_t degrees, uint8_t direction);

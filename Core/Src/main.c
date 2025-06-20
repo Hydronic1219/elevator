@@ -25,6 +25,10 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "fnd.h"
+#include "step.h"
+#include "lcd.h"
+#include "delay_us.h"
 
 #include "stdbool.h"
 
@@ -54,6 +58,7 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+<<<<<<< HEAD
 
 
 enum ELEVATOR_STATE{
@@ -198,6 +203,37 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
 }
 
+=======
+//void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+//{
+//	if(huart->Instance == USART2)
+//	{
+//	    HAL_UART_Receive_IT(&huart2, &rxData, sizeof(rxData));
+//
+//	    if(rxData == 'a')
+//	    {
+//	    	uint8_t _text[] = "-90 \n";
+//	    	HAL_UART_Transmit(&huart2, _text, sizeof(_text), 100);
+//	    	rxaFlag = 1;
+//
+//	    }
+//
+//	    if(rxData == 'b')
+//	    {
+//	    	uint8_t _text[] = "0 \n";
+//	    	HAL_UART_Transmit(&huart2, _text, sizeof(_text), 100);
+//	    	rxbFlag = 1;
+//	    }
+//
+//	    if(rxData == 'c')
+//	    {
+//	    	uint8_t _text[] = "90 \n";
+//	    	HAL_UART_Transmit(&huart2, _text, sizeof(_text), 100);
+//	    	rxcFlag = 1;
+//	    }
+//	}
+//}
+>>>>>>> 8df44e7 (3cha)
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -239,6 +275,14 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
+HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
+
+//  HAL_UART_Receive_IT(&huart2, &rxData, sizeof(rxData));
+//  HAL_UART_Transmit_IT(&huart2, &rxData, sizeof(rxData));
+
+  TIM3->CCR3 = 500;
+
+
 
   // 초기 설정값 넣기
   elevator_state_init_progress();
@@ -246,9 +290,11 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Infinite loop */
+
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+<<<<<<< HEAD
     if (current_elevator_state == ELEVATOR_STATE_INIT_PROGRESS){
       //...
 
@@ -267,6 +313,21 @@ int main(void)
 //    {
 //      //door_close;
 //    }
+=======
+
+	  TIM3->CCR3 = 50;
+	  HAL_Delay(1000);
+	  TIM3->CCR3 = 100;
+	  HAL_Delay(1000);
+
+
+
+
+
+
+
+
+>>>>>>> 8df44e7 (3cha)
 
     /* USER CODE END WHILE */
 
