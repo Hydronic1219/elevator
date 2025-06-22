@@ -66,155 +66,59 @@ void SystemClock_Config(void);
 
 enum ELEVATOR_STATE
 {
-  ELEVATOR_STATE_INIT, //
-  ELEVATOR_STATE_MOVING,
-  ELEVATOR_STATE_STOP
+  ELEVATOR_STATE_INIT,    // 엘리베이터 초기화 상태
+  ELEVATOR_STATE_MOVING,  // 엘리베이터 이동 중 상태
+  ELEVATOR_STATE_STOP     // 엘리베이터 정지 상태
 };
+enum ELEVATOR_STATE         current_elevator_state;
 
-enum ELEVATOR_STATE_ACTION
-{
-  ELEVATOR_STATE_ACTION_START,
-  ELEVATOR_STATE_ACTION_PROGRESS,
-  ELEVATOR_STATE_ACTION_COMPLETE,
-};
 
-enum MOVE_STATE
-{
-  MOVE_STATE_UP,
-  MOVE_STATE_DOWN
-};
+#define ELEVATOR_STATE_ACTION_START 0    // 상태 진입 시 최초 1회 실행되는 동작
+#define ELEVATOR_STATE_ACTION_PROGRESS 1 // 상태 내에서 반복 실행되는 동작
+uint16_t  current_elevator_state_action;
 
-enum FLOOR_NUM
-{
-  FLOOR_1F,
-  FLOOR_2F,
-  FLOOR_3F,
-};
+#define MOVE_STATE_UP     0
+#define MOVE_STATE_DOWN   1
+uint16_t current_move_state;
 
-enum ELEVATOR_STATE current_elevator_state;
-enum ELEVATOR_STATE_ACTION current_elevator_state_action;
-enum MOVE_STATE current_move_state;
-enum FLOOR_NUM current_floor;
+// #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
+#define FLOOR_1F          GPIO_PIN_10
+#define FLOOR_2F          GPIO_PIN_3
+#define FLOOR_3F          GPIO_PIN_5
+uint16_t current_floor;
 
 void gpio_pin_uart_log(uint16_t GPIO_Pin)
 {
   if(GPIO_Pin == GPIO_PIN_10){
-    uint8_t aaa[] = "GPIO_PIN_10\n";
-    HAL_UART_Transmit(&huart2, aaa, sizeof(aaa), 100);
+    uint8_t logText[] = "GPIO_PIN_10\n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
   }
 
   if(GPIO_Pin == GPIO_PIN_3){
-    uint8_t aaa[] = "GPIO_PIN_3\n";
-    HAL_UART_Transmit(&huart2, aaa, sizeof(aaa), 100);
+    uint8_t logText[] = "GPIO_PIN_3\n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
   }
 
   if(GPIO_Pin == GPIO_PIN_5){
-    uint8_t aaa[] = "GPIO_PIN_5\n";
-    HAL_UART_Transmit(&huart2, aaa, sizeof(aaa), 100);
+    uint8_t logText[] = "GPIO_PIN_5\n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
   }
 
   if(GPIO_Pin == GPIO_PIN_8){
-    uint8_t aaa[] = "GPIO_PIN_8\n";
-    HAL_UART_Transmit(&huart2, aaa, sizeof(aaa), 100);
+    uint8_t logText[] = "GPIO_PIN_8\n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
   }
 
   if(GPIO_Pin == GPIO_PIN_6){
-    uint8_t aaa[] = "GPIO_PIN_6 \n";
-    HAL_UART_Transmit(&huart2, aaa, sizeof(aaa), 100);
+    uint8_t logText[] = "GPIO_PIN_6 \n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
   }
 
   if(GPIO_Pin == GPIO_PIN_9){
-    uint8_t aaa[] = "GPIO_PIN_9\n";
-    HAL_UART_Transmit(&huart2, aaa, sizeof(aaa), 100);
+    uint8_t logText[] = "GPIO_PIN_9\n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
   }
 
-}
-
-void elevator_state_init_start()
-{
-  current_elevator_state = ELEVATOR_STATE_INIT;
-  current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
-  current_floor = FLOOR_1F;
-}
-
-void elevator_state_init_complete()
-{
-  current_elevator_state = ELEVATOR_STATE_INIT;
-  current_elevator_state_action = ELEVATOR_STATE_ACTION_COMPLETE;
-  //current_floor = FLOOR_1F;
-}
-
-void elevator_state_stop_transition(enum FLOOR_NUM floor)
-{
-  current_elevator_state = ELEVATOR_STATE_STOP;
-  current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
-  current_floor = floor;
-}
-
-void change_current_elevator_state_action(enum ELEVATOR_STATE_ACTION state_action)
-{
-  current_elevator_state_action = state_action;
-}
-
-void check_init_elevator_state(uint16_t GPIO_Pin)
-{
-  if (current_elevator_state_action != ELEVATOR_STATE_ACTION_PROGRESS) {
-    return;
-  }
-
-  // 상태 종료 이동  조건  ELEVATOR_STATE_STOP
-  /* if(GPIO_Pin == GPIO_PIN_10) */
-  bool is_elevator_stop_transition_allowed = (GPIO_Pin == GPIO_PIN_10);
-  if(is_elevator_stop_transition_allowed)
-  {
-    //current_elevator_state_action = ELEVATOR_STATE_ACTION_COMPLETE;
-    change_current_elevator_state_action(ELEVATOR_STATE_ACTION_COMPLETE);
-  }
-}
-
-void move_elevator_with_botton(uint16_t GPIO_Pin)
-{
-  bool isButtonFin = (GPIO_Pin == GPIO_PIN_8) ||  (GPIO_Pin == GPIO_PIN_6) || (GPIO_Pin == GPIO_PIN_5);
-  if (!isButtonFin) return;
-
-  // test 방향 바꿈
-  if (current_move_state == MOVE_STATE_UP) current_move_state = MOVE_STATE_DOWN;
-  else current_move_state = MOVE_STATE_UP;
-
-
-  if (current_move_state == MOVE_STATE_UP)
-  {
-    current_elevator_state = ELEVATOR_STATE_MOVING;
-    current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
-  }
-  else //if (current_move_state == MOVE_STATE_DOWN)
-  {
-    current_elevator_state = ELEVATOR_STATE_MOVING;
-    current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
-  }
-}
-
-
-
-void check_moving_elevator_state(uint16_t GPIO_Pin)
-{
-  // [ELEVATOR_STATE_MOVING 현재 상태에 따른 이동]
-  //change_toogle_botton(GPIO_Pin); //미구현
-
-  bool is_elevator_stop_transition_allowed = (GPIO_Pin == GPIO_PIN_10) | (GPIO_Pin == GPIO_PIN_3) | (GPIO_Pin == GPIO_PIN_5);
-  if(is_elevator_stop_transition_allowed)
-  {
-    change_current_elevator_state_action(ELEVATOR_STATE_ACTION_COMPLETE);
-  }
-
-}
-
-void check_move_elevator_with_button(uint16_t GPIO_Pin)
-{
-  // [ELEVATOR_STATE_STOP 현재 상태에 따른 이동]
-  //change_toogle_botton(GPIO_Pin); // 미구현
-
-  move_elevator_with_botton(GPIO_Pin);
 }
 
 // 현재 설정값에 따라 엘리베이터 이동 함수
@@ -229,84 +133,62 @@ void moving_elevator()
   }
 }
 
-void loop_elevator_state_init()
-{
-  if (current_elevator_state_action == ELEVATOR_STATE_ACTION_START)
-  { // 상태 변경 진입 시 한번만 호출
-    change_current_elevator_state_action(ELEVATOR_STATE_ACTION_PROGRESS);
-  }
-  else if (current_elevator_state_action == ELEVATOR_STATE_ACTION_PROGRESS)
-  {
-    // 엘리베이터를 이동 함수호출
-    moving_elevator();
-  }
-  else if (current_elevator_state_action == ELEVATOR_STATE_ACTION_COMPLETE)
-  {
-    elevator_state_stop_transition(FLOOR_1F);
-  }
-}
-
-//
-void loop_elevator_state_stop()
-{
-  if (current_elevator_state_action == ELEVATOR_STATE_ACTION_START)
-  { // 상태 변경 진입 시 한번만 호출
-
-    change_current_elevator_state_action(ELEVATOR_STATE_ACTION_PROGRESS);
-  }
-  else if (current_elevator_state_action == ELEVATOR_STATE_ACTION_PROGRESS)
-  {
-
-  }
-  else if (current_elevator_state_action == ELEVATOR_STATE_ACTION_COMPLETE)
-  {
-
-  }
-}
-
-void loop_elevator_state_moving()
-{
-  if (current_elevator_state_action == ELEVATOR_STATE_ACTION_START)
-  { // 상태 변경 진입 시 한번만 호출
-    change_current_elevator_state_action(ELEVATOR_STATE_ACTION_PROGRESS);
-  }
-  else if (current_elevator_state_action == ELEVATOR_STATE_ACTION_PROGRESS)
-  {
-    // 엘리베이터를 이동 함수호출
-    moving_elevator();
-  }
-  else if (current_elevator_state_action == ELEVATOR_STATE_ACTION_COMPLETE)
-  {
-    elevator_state_stop_transition(current_floor);
-  }
-}
+// [Received input Event]
+// #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
+//    ==> ? 확인
+// #2.Button Event : 1F(GPIO_PIN_8), 2F(GPIO_PIN_6), 3F(GPIO_PIN_9)
+//    ==> ? Toggle On 상태 정보 기억
+// #3.Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  // [Received input Event]
-  // #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
-  //    ==> ? 확인
-  // #2.Button Event : 1F(GPIO_PIN_8), 2F(GPIO_PIN_6), 3F(GPIO_PIN_9)
-  //    ==> ? Toggle On 상태 정보 기억
-  // #3.Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
-
-  // gpio pin log
+  // TODO : 모든 이밴트를 수신하는 인터럽트 함수 GPIO_Pin 값으로 수신 정보 확인 가능. 
+  // gpio pin log : UART 로 Pin 수신정보를 디버깅하기 위해 추가.
   gpio_pin_uart_log(GPIO_Pin);
 
   if(current_elevator_state == ELEVATOR_STATE_INIT)
   {
-    // error case... 호출되면 뭔가 잘못됐음.
-    check_init_elevator_state(GPIO_Pin);
-  }
-  else if (current_elevator_state == ELEVATOR_STATE_MOVING)
-  {
-    //
-    check_moving_elevator_state(GPIO_Pin);
+    // NOTICE: ELEVATOR_STATE_INIT 상태에서 Photo Pin 정보를 체크    
+    // Photo Pin 정보 수신 시 ELEVATOR 정지시킴 (ELEVATOR_STATE_STOP)
+    bool is_elevator_stop_transition_allowed = (GPIO_Pin == GPIO_PIN_10) | (GPIO_Pin == GPIO_PIN_3) | (GPIO_Pin == GPIO_PIN_5);
+    if(is_elevator_stop_transition_allowed)
+    { 
+      current_elevator_state = ELEVATOR_STATE_STOP;
+      current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+      current_floor = GPIO_Pin;
+    }
   }
   else if (current_elevator_state == ELEVATOR_STATE_STOP)
   {
-    // 버튼 이밴트,
-    check_move_elevator_with_button(GPIO_Pin);
+    // 버튼 이밴트 [ELEVATOR_STATE_STOP 현재 상태에 따른 이동]
+    
+    // #1. door open - close 명령 처리..
+
+    // #2. floor 버튼 toogle 정보 저장
+    // change_toogle_botton(GPIO_Pin); // 미구현
+
+    // #3. 현제 위치 와 버튼상태를 확인해 진행 방향을 검토해야 함.
+    bool isButtonFin = (GPIO_Pin == GPIO_PIN_8) ||  (GPIO_Pin == GPIO_PIN_6) || (GPIO_Pin == GPIO_PIN_5);
+    if (isButtonFin){
+      current_elevator_state = ELEVATOR_STATE_MOVING;
+      current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+    }
+  }
+  else if (current_elevator_state == ELEVATOR_STATE_MOVING)
+  {
+    // #2. floor 버튼 toogle 정보 저장
+    // change_toogle_botton(GPIO_Pin); // 미구현
+
+
+    // [TODO]: 종료 조건에 버튼상태까지 확인하는 코드 추가 필요함..... 
+    // [ELEVATOR_STATE_MOVING 현재 상태에 따른 이동]
+    bool is_elevator_stop_transition_allowed = (GPIO_Pin == GPIO_PIN_10) | (GPIO_Pin == GPIO_PIN_3) | (GPIO_Pin == GPIO_PIN_5);
+    if(is_elevator_stop_transition_allowed) 
+    {
+      current_elevator_state = ELEVATOR_STATE_STOP;
+      current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+      current_floor = GPIO_Pin;
+    }
   }
 }
 
@@ -358,8 +240,16 @@ int main(void)
   // TIM3->CCR3 = 500;
   //  HAL_UART_Receive_IT(&huart2, &rxData, sizeof(rxData));
   //  HAL_UART_Transmit_IT(&huart2, &rxData, sizeof(rxData));
-  // 초기 설정값 넣기
-  elevator_state_init_start();
+  
+    
+  { /* 초기 설정값 넣기 */ 
+    // 현재 동작 시작상태
+    current_elevator_state = ELEVATOR_STATE_INIT;
+    current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+
+    // 앨리베이터 위치
+    current_floor = FLOOR_1F;
+  }
 
   /* USER CODE END 2 */
 
@@ -369,18 +259,73 @@ int main(void)
   {
     // check 루틴 순서..
     // 1. current_elevator_state -->
-    // 2. current_elevator_state_action -->
+    // NOTICE: [ELEVATOR_STATE_INIT -->  ELEVATOR_STATE_STOP <--> ELEVATOR_STATE_MOVING] 
+    // 상태가 변경 되면 이 상태안에서
+    //   1. ELEVATOR_STATE_ACTION_START(1회)
+    //   2. ELEVATOR_STATE_ACTION_PROGRESS (N회)
+    // 순으로 loop 실행.
+
+    // NOTICE : current_elevator_state 상태는 HAL_GPIO_EXTI_Callback 함수에서만 변경하세요.
+
     if (current_elevator_state == ELEVATOR_STATE_INIT)
     {
-      loop_elevator_state_init();
+      switch (current_elevator_state_action) 
+      {
+        case ELEVATOR_STATE_ACTION_START:
+          // NOTICE: INIT 상태에서 ONE Time 실행 되어야 되는 경우 여기서 처리 
+          // (예) LCD 출력 등 //
+          // LCD 출력 문구 ....
+
+          // 엘리베이터 방향 지정
+          current_move_state = MOVE_STATE_DOWN;
+
+          // ELEVATOR_STATE_ACTION_PROGRESS 상태로 이동
+          current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
+          break;
+          
+        case ELEVATOR_STATE_ACTION_PROGRESS:
+          // 엘리베이터를 이동 함수호출
+          moving_elevator();
+          break;
+      }
     }
     else if(current_elevator_state == ELEVATOR_STATE_STOP)
     {
-      loop_elevator_state_stop();
+      switch (current_elevator_state_action)
+      {
+        case ELEVATOR_STATE_ACTION_START:
+          // NOTICE: INIT 상태에서 ONE Time 실행 되어야 되는 경우 여기서 처리 (예) LCD 출력 등 // 
+          // (예) 도어 오픈 - 클로즈 명령 //
+          
+          // 엘리베이터 상하 이동을 위해 상태변경 
+          //current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
+          break;
+        
+        case ELEVATOR_STATE_ACTION_PROGRESS:
+          // door open closed 서보 모터 동작 처리 
+          break;
+      }
     }
     else if(current_elevator_state == ELEVATOR_STATE_MOVING)
     {
-      loop_elevator_state_moving();
+      switch (current_elevator_state_action)
+      {
+        case ELEVATOR_STATE_ACTION_START:
+          // 상태 변경 진입 시 한번만 호출
+
+          // for test
+          // !!!! test 방향 바꿈 코드 삭제 필요
+          if (current_move_state == MOVE_STATE_UP) current_move_state = MOVE_STATE_DOWN;
+          else current_move_state = MOVE_STATE_UP;
+
+          current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
+          break;
+        
+        case ELEVATOR_STATE_ACTION_PROGRESS:
+          // 엘리베이터를 이동 함수호출
+          moving_elevator();
+          break;
+      }
     }
 
     /* USER CODE END WHILE */
