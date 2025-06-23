@@ -64,6 +64,11 @@
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+//
+#define DEBOUNCE_DEREY 10
+//
+
+
 enum ELEVATOR_STATE
 {
   ELEVATOR_STATE_INIT,    // 엘리베이터 초기화 상태
@@ -81,11 +86,30 @@ uint16_t  current_elevator_state_action;
 #define MOVE_STATE_DOWN   1
 uint16_t current_move_state;
 
-// #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
-#define FLOOR_1F          GPIO_PIN_10
-#define FLOOR_2F          GPIO_PIN_3
-#define FLOOR_3F          GPIO_PIN_5
+
+// [Received input Event]
+// #1.Photo Event : 1F( [PA10] : GPIO_PIN_10) , 2F([PB3] : GPIO_PIN_3), 3F([PB5] : GPIO_PIN_5)
+#define FLOOR_PIN_1F          GPIO_PIN_10
+#define FLOOR_PIN_2F          GPIO_PIN_3
+#define FLOOR_PIN_3F          GPIO_PIN_5
 uint16_t current_floor;
+
+// #2.Button Event : 1F( [PC6] : GPIO_PIN_8), 2F( [PC8] GPIO_PIN_6), 3F( [PA9] : GPIO_PIN_9)
+//    ==> ? Toggle On 상태 정보 기억
+#define BUTTON_PIN_1F          GPIO_PIN_8
+#define BUTTON_PIN_2F          GPIO_PIN_6
+#define BUTTON_PIN_3F          GPIO_PIN_9
+
+#define BUTTON_TOOGLE_ON      1
+#define BUTTON_TOOGLE_OFF     0
+
+uint16_t button_1f_toogle = BUTTON_TOOGLE_OFF;
+uint16_t button_2f_toogle = BUTTON_TOOGLE_OFF;
+uint16_t button_3f_toogle = BUTTON_TOOGLE_OFF;
+
+// #3.Door open/close : Open ([PA12] GPIO_PIN_12), Close ( [PA11] GPIO_PIN_11)
+
+// #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
 
 void gpio_pin_uart_log(uint16_t GPIO_Pin)
 {
@@ -133,64 +157,206 @@ void moving_elevator()
   }
 }
 
+bool skip_check_debounce_button(uint16_t GPIO_Pin)
+{
+  bool isRetSkip = false;
+  //----  버튼 --------------------------------------------------
+  //1F( [PC6] : GPIO_PIN_8) skip
+  if (GPIO_Pin == GPIO_PIN_8) {
+    GPIO_PinState buttonState = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_8); //1F
+    if (GPIO_PIN_SET == buttonState) {
+      uint8_t logText[] = "#1F Button Press : GPIO_PIN_SET \n";
+      HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+
+      if (button_1f_toogle == BUTTON_TOOGLE_ON){
+        button_1f_toogle = BUTTON_TOOGLE_OFF;
+      }else{
+        button_1f_toogle = BUTTON_TOOGLE_ON;
+      }
+
+    } else {
+      uint8_t logText[] = "#---- 1F Button Press skip :  \n";
+      HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+      //return;
+      isRetSkip = true;
+    }
+  }
+
+  // 2F( [PC8] GPIO_PIN_6)
+  if (GPIO_Pin == GPIO_PIN_6) {
+    GPIO_PinState buttonState = HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_6); //2F
+    if (GPIO_PIN_SET == buttonState) {
+      uint8_t logText[] = "#2F Button Press : GPIO_PIN_SET \n";
+      HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+
+      if (button_2f_toogle == BUTTON_TOOGLE_ON){
+        button_2f_toogle = BUTTON_TOOGLE_OFF;
+      }else{
+        button_2f_toogle = BUTTON_TOOGLE_ON;
+      }
+
+    } else {
+      uint8_t logText[] = "#---- 2F Button Press skip :  \n";
+      HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+      //return;
+      isRetSkip = true;
+    }
+  }
+
+  //3F( [PA9] : GPIO_PIN_9)
+  if (GPIO_Pin == GPIO_PIN_9) {
+    GPIO_PinState buttonState = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_9); //2F
+    if (GPIO_PIN_SET == buttonState) {
+      uint8_t logText[] = "#3F Button Press : GPIO_PIN_SET \n";
+      HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+
+      if (button_3f_toogle == BUTTON_TOOGLE_ON){
+        button_3f_toogle = BUTTON_TOOGLE_OFF;
+      }else{
+        button_3f_toogle = BUTTON_TOOGLE_ON;
+      }
+    } else {
+      uint8_t logText[] = "#---- 3F Button Press skip :  \n";
+      HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+      //return;
+      isRetSkip = true;
+    }
+  }
+
+  return isRetSkip;
+}
+
 // [Received input Event]
-// #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
+// #1.Photo Event : 1F( [PA10] : GPIO_PIN_10) , 2F([PB3] : GPIO_PIN_3), 3F([PB5] : GPIO_PIN_5)
 //    ==> ? 확인
-// #2.Button Event : 1F(GPIO_PIN_8), 2F(GPIO_PIN_6), 3F(GPIO_PIN_9)
+// #2.Button Event : 1F( [PC6] : GPIO_PIN_8), 2F( [PC8] GPIO_PIN_6), 3F( [PA9] : GPIO_PIN_9)
 //    ==> ? Toggle On 상태 정보 기억
-// #3.Door open/close : Open (GPIO_PIN_12), Close (GPIO_PIN_11)
+// #3.Door open/close : Open ([PA12] GPIO_PIN_12), Close ( [PA11] GPIO_PIN_11)
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-  // TODO : 모든 이밴트를 수신하는 인터럽트 함수 GPIO_Pin 값으로 수신 정보 확인 가능. 
-  // gpio pin log : UART 로 Pin 수신정보를 디버깅하기 위해 추가.
+  if (skip_check_debounce_button(GPIO_Pin)){
+    return;
+  }
+
   gpio_pin_uart_log(GPIO_Pin);
 
   if(current_elevator_state == ELEVATOR_STATE_INIT)
   {
     // NOTICE: ELEVATOR_STATE_INIT 상태에서 Photo Pin 정보를 체크    
     // Photo Pin 정보 수신 시 ELEVATOR 정지시킴 (ELEVATOR_STATE_STOP)
-    bool is_elevator_stop_transition_allowed = (GPIO_Pin == GPIO_PIN_10) | (GPIO_Pin == GPIO_PIN_3) | (GPIO_Pin == GPIO_PIN_5);
+    bool is_elevator_stop_transition_allowed = (GPIO_Pin == FLOOR_PIN_1F);
     if(is_elevator_stop_transition_allowed)
     { 
       current_elevator_state = ELEVATOR_STATE_STOP;
       current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
-      current_floor = GPIO_Pin;
+      current_floor = FLOOR_PIN_1F;
     }
   }
   else if (current_elevator_state == ELEVATOR_STATE_STOP)
   {
     // 버튼 이밴트 [ELEVATOR_STATE_STOP 현재 상태에 따른 이동]
-    
-    // #1. door open - close 명령 처리..
+    // 정지 상태에서는  Button 과 door event 만처리한다.
 
-    // #2. floor 버튼 toogle 정보 저장
-    // change_toogle_botton(GPIO_Pin); // 미구현
+    // TODO : door event 추가 필요함.
+    bool isValidFinCheck = (GPIO_Pin == BUTTON_PIN_1F) ||  (GPIO_Pin == BUTTON_PIN_2F) || (GPIO_Pin == BUTTON_PIN_3F);
+    if (!isValidFinCheck){
+      uint8_t logText[] = "#---- skip ELEVATOR_STATE_STOP is only button and door event :  \n";
+      HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+      return;
+    }
 
-    // #3. 현제 위치 와 버튼상태를 확인해 진행 방향을 검토해야 함.
-    bool isButtonFin = (GPIO_Pin == GPIO_PIN_8) ||  (GPIO_Pin == GPIO_PIN_6) || (GPIO_Pin == GPIO_PIN_5);
-    if (isButtonFin){
-      current_elevator_state = ELEVATOR_STATE_MOVING;
-      current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+    {// Step 1. 현재 1층  정지 상태에서 버튼이 눌린 경우
+      bool check1FButtonAction = (current_floor == FLOOR_PIN_1F) && isValidFinCheck;
+      if (check1FButtonAction){
+        if (GPIO_Pin == BUTTON_PIN_1F) {
+          button_1f_toogle = BUTTON_TOOGLE_OFF;
+        }else{ //(GPIO_Pin == BUTTON_PIN_2F) || (GPIO_Pin == BUTTON_PIN_1F)
+          if((button_2f_toogle == BUTTON_TOOGLE_ON) || (button_3f_toogle == BUTTON_TOOGLE_ON)) {
+            current_elevator_state = ELEVATOR_STATE_MOVING;
+            current_move_state = MOVE_STATE_UP;
+            current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+          }
+        }
+      }
+    }
+
+    {// Step 2. 현재 2층  정지 상태에서 버튼이 눌린 경우
+      bool check2FButtonAction = (current_floor == FLOOR_PIN_2F) && isValidFinCheck;
+      if (check2FButtonAction){
+        if (GPIO_Pin == BUTTON_PIN_2F) {
+          button_2f_toogle = BUTTON_TOOGLE_OFF;
+        }
+        else if (GPIO_Pin == BUTTON_PIN_3F && button_3f_toogle == BUTTON_TOOGLE_ON)
+        {
+          current_elevator_state = ELEVATOR_STATE_MOVING;
+          current_move_state = MOVE_STATE_UP;
+          current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+        }
+        else if(GPIO_Pin == BUTTON_PIN_1F && button_1f_toogle == BUTTON_TOOGLE_ON){
+          current_elevator_state = ELEVATOR_STATE_MOVING;
+          current_move_state = MOVE_STATE_DOWN;
+          current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+        }
+      }
+    }
+
+    {// Step 3. 현재 3층  정지 상태에서 버튼이 눌린 경우
+      bool check3FButtonAction = (current_floor == FLOOR_PIN_3F) && isValidFinCheck;
+      if (check3FButtonAction)
+      {
+        if (GPIO_Pin == BUTTON_PIN_3F) {
+          button_3f_toogle = BUTTON_TOOGLE_OFF;
+        } else { //(GPIO_Pin == BUTTON_PIN_2F) || (GPIO_Pin == BUTTON_PIN_1F)
+          if((button_1f_toogle == BUTTON_TOOGLE_ON) || (button_2f_toogle == BUTTON_TOOGLE_ON)) {
+            current_elevator_state = ELEVATOR_STATE_MOVING;
+            current_move_state = MOVE_STATE_DOWN;
+            current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+          }
+        }
+
+      }
     }
   }
   else if (current_elevator_state == ELEVATOR_STATE_MOVING)
   {
-    // #2. floor 버튼 toogle 정보 저장
-    // change_toogle_botton(GPIO_Pin); // 미구현
-
-
     // [TODO]: 종료 조건에 버튼상태까지 확인하는 코드 추가 필요함..... 
     // [ELEVATOR_STATE_MOVING 현재 상태에 따른 이동]
-    bool is_elevator_stop_transition_allowed = (GPIO_Pin == GPIO_PIN_10) | (GPIO_Pin == GPIO_PIN_3) | (GPIO_Pin == GPIO_PIN_5);
+    bool is_elevator_stop_transition_allowed = (GPIO_Pin == FLOOR_PIN_1F) | (GPIO_Pin == FLOOR_PIN_2F) | (GPIO_Pin == FLOOR_PIN_3F);
     if(is_elevator_stop_transition_allowed) 
     {
-      current_elevator_state = ELEVATOR_STATE_STOP;
-      current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
-      current_floor = GPIO_Pin;
+      bool is1F_checked = (GPIO_Pin == FLOOR_PIN_1F) && (button_1f_toogle == BUTTON_TOOGLE_ON);
+      bool is2F_checked = (GPIO_Pin == FLOOR_PIN_2F) && (button_2f_toogle == BUTTON_TOOGLE_ON);
+      bool is3F_checked = (GPIO_Pin == FLOOR_PIN_3F) && (button_3f_toogle == BUTTON_TOOGLE_ON);
+
+      if (is1F_checked)
+      {
+        current_elevator_state = ELEVATOR_STATE_STOP;
+        current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+        current_floor = GPIO_Pin;
+        button_1f_toogle = BUTTON_TOOGLE_OFF;
+      }
+      else if (is2F_checked )
+      {
+        current_elevator_state = ELEVATOR_STATE_STOP;
+        current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+        current_floor = GPIO_Pin;
+        button_2f_toogle = BUTTON_TOOGLE_OFF;
+
+      }
+      else if (is3F_checked)
+      {
+        current_elevator_state = ELEVATOR_STATE_STOP;
+        current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+        current_floor = GPIO_Pin;
+        button_3f_toogle = BUTTON_TOOGLE_OFF;
+      }
     }
   }
 }
+
+
+
 
 /* USER CODE END PFP */
 
@@ -236,6 +402,9 @@ int main(void)
 
   HAL_TIM_Base_Start(&htim11);
 
+//  uint32_t lastDebounceTime = 0;
+//  GPIO_PinState lastButtonState = GPIO_PIN_SET;
+
   // HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
   // TIM3->CCR3 = 500;
   //  HAL_UART_Receive_IT(&huart2, &rxData, sizeof(rxData));
@@ -248,7 +417,7 @@ int main(void)
     current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
 
     // 앨리베이터 위치
-    current_floor = FLOOR_1F;
+    current_floor = FLOOR_PIN_1F;
   }
 
   /* USER CODE END 2 */
@@ -312,12 +481,9 @@ int main(void)
       {
         case ELEVATOR_STATE_ACTION_START:
           // 상태 변경 진입 시 한번만 호출
-
-          // for test
-          // !!!! test 방향 바꿈 코드 삭제 필요
-          if (current_move_state == MOVE_STATE_UP) current_move_state = MOVE_STATE_DOWN;
-          else current_move_state = MOVE_STATE_UP;
-
+        {
+          // log
+        }
           current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
           break;
         
