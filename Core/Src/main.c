@@ -108,11 +108,23 @@ uint16_t button_2f_toogle = BUTTON_TOOGLE_OFF;
 uint16_t button_3f_toogle = BUTTON_TOOGLE_OFF;
 
 // #3.Door open/close : Open ([PA12] GPIO_PIN_12), Close ( [PA11] GPIO_PIN_11)
+#define DOOR_PIN_OPEN          GPIO_PIN_12
+#define DOOR_PIN_CLOSE         GPIO_PIN_11
+//bool isDoorPinFlag = false;
 
 // #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
-
 void gpio_pin_uart_log(uint16_t GPIO_Pin)
 {
+  if(GPIO_Pin == GPIO_PIN_12){
+    uint8_t logText[] = "GPIO_PIN_12 Open \n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+  }
+
+  if(GPIO_Pin == GPIO_PIN_11){
+    uint8_t logText[] = "GPIO_PIN_11 Close \n";
+    HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
+  }
+
   if(GPIO_Pin == GPIO_PIN_10){
     uint8_t logText[] = "GPIO_PIN_10\n";
     HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
@@ -174,8 +186,6 @@ bool skip_check_debounce_button(uint16_t GPIO_Pin)
         button_1f_toogle = BUTTON_TOOGLE_ON;
       }
 
-      //HAL_Delay(50);
-
     } else {
       uint8_t logText[] = "#---- 1F Button Press skip :  \n";
       HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
@@ -197,8 +207,6 @@ bool skip_check_debounce_button(uint16_t GPIO_Pin)
         button_2f_toogle = BUTTON_TOOGLE_ON;
       }
 
-      //HAL_Delay(50);
-
     } else {
       uint8_t logText[] = "#---- 2F Button Press skip :  \n";
       HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
@@ -219,8 +227,6 @@ bool skip_check_debounce_button(uint16_t GPIO_Pin)
       }else{
         button_3f_toogle = BUTTON_TOOGLE_ON;
       }
-
-      //HAL_Delay(50);
 
     } else {
       uint8_t logText[] = "#---- 3F Button Press skip :  \n";
@@ -266,6 +272,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     // 정지 상태에서는  Button 과 door event 만처리한다.
 
     // TODO : door event 추가 필요함.
+    bool isDoorFinCheck = (GPIO_Pin == DOOR_PIN_OPEN) || (GPIO_Pin == DOOR_PIN_CLOSE);
+    if (isDoorFinCheck){
+      const uint32_t ccr3_val = TIM3->CCR3;
+
+      if (GPIO_Pin == DOOR_PIN_OPEN && ccr3_val != 25){
+        TIM3->CCR3 = 25;  // 125
+      }
+      else if (GPIO_Pin == DOOR_PIN_CLOSE && ccr3_val != 125){
+        TIM3->CCR3 = 125; // 125
+      }
+
+      //isDoorPinFlag = true;
+      return;
+    }
+
     bool isValidFinCheck = (GPIO_Pin == BUTTON_PIN_1F) ||  (GPIO_Pin == BUTTON_PIN_2F) || (GPIO_Pin == BUTTON_PIN_3F);
     if (!isValidFinCheck){
       uint8_t logText[] = "#---- skip ELEVATOR_STATE_STOP is only button and door event :  \n";
@@ -412,11 +433,8 @@ int main(void)
 //  GPIO_PinState lastButtonState = GPIO_PIN_SET;
 
   HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
-  // TIM3->CCR3 = 500;
-  //  HAL_UART_Receive_IT(&huart2, &rxData, sizeof(rxData));
-  //  HAL_UART_Transmit_IT(&huart2, &rxData, sizeof(rxData));
-  
-    
+  TIM3->CCR3 = 125; // 125
+
   { /* 초기 설정값 넣기 */ 
     // 현재 동작 시작상태
     current_elevator_state = ELEVATOR_STATE_INIT;
