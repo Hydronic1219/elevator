@@ -174,6 +174,8 @@ bool skip_check_debounce_button(uint16_t GPIO_Pin)
         button_1f_toogle = BUTTON_TOOGLE_ON;
       }
 
+      //HAL_Delay(50);
+
     } else {
       uint8_t logText[] = "#---- 1F Button Press skip :  \n";
       HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
@@ -195,6 +197,8 @@ bool skip_check_debounce_button(uint16_t GPIO_Pin)
         button_2f_toogle = BUTTON_TOOGLE_ON;
       }
 
+      //HAL_Delay(50);
+
     } else {
       uint8_t logText[] = "#---- 2F Button Press skip :  \n";
       HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
@@ -215,6 +219,9 @@ bool skip_check_debounce_button(uint16_t GPIO_Pin)
       }else{
         button_3f_toogle = BUTTON_TOOGLE_ON;
       }
+
+      //HAL_Delay(50);
+
     } else {
       uint8_t logText[] = "#---- 3F Button Press skip :  \n";
       HAL_UART_Transmit(&huart2, logText, sizeof(logText), 100);
@@ -314,7 +321,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
             current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
           }
         }
-
       }
     }
   }
@@ -325,9 +331,9 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     bool is_elevator_stop_transition_allowed = (GPIO_Pin == FLOOR_PIN_1F) | (GPIO_Pin == FLOOR_PIN_2F) | (GPIO_Pin == FLOOR_PIN_3F);
     if(is_elevator_stop_transition_allowed) 
     {
-      bool is1F_checked = (GPIO_Pin == FLOOR_PIN_1F) && (button_1f_toogle == BUTTON_TOOGLE_ON);
+      bool is1F_checked = (GPIO_Pin == FLOOR_PIN_1F) /*&& (button_1f_toogle == BUTTON_TOOGLE_ON)*/;
       bool is2F_checked = (GPIO_Pin == FLOOR_PIN_2F) && (button_2f_toogle == BUTTON_TOOGLE_ON);
-      bool is3F_checked = (GPIO_Pin == FLOOR_PIN_3F) && (button_3f_toogle == BUTTON_TOOGLE_ON);
+      bool is3F_checked = (GPIO_Pin == FLOOR_PIN_3F) /*&& (button_3f_toogle == BUTTON_TOOGLE_ON)*/;
 
       if (is1F_checked)
       {
@@ -405,7 +411,7 @@ int main(void)
 //  uint32_t lastDebounceTime = 0;
 //  GPIO_PinState lastButtonState = GPIO_PIN_SET;
 
-  // HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
+  HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
   // TIM3->CCR3 = 500;
   //  HAL_UART_Receive_IT(&huart2, &rxData, sizeof(rxData));
   //  HAL_UART_Transmit_IT(&huart2, &rxData, sizeof(rxData));
