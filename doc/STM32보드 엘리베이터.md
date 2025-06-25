@@ -53,7 +53,27 @@ enum ELEVATOR_STATE{
 ```
 
 
+## 엘리베이터 상태(State) 다이어그램
 
+```mermaid
+stateDiagram-v2
+    [*] --> ELEVATOR_STATE_INIT : 시스템 시작
+    ELEVATOR_STATE_INIT --> ELEVATOR_STATE_STOP : 1F 포토센서 감지
+    ELEVATOR_STATE_STOP --> ELEVATOR_STATE_MOVING : 도착층버튼/도어 이벤트
+    ELEVATOR_STATE_STOP --> ELEVATOR_STATE_STOP : 도어 (Open-Close) 버튼 이벤트 반복
+    ELEVATOR_STATE_MOVING --> ELEVATOR_STATE_STOP : 도착층 포토센서 감지
+```
+
+- **상태 설명**
+    - `ELEVATOR_STATE_INIT`: 시스템 초기화 및 시작 위치로 이동
+    - `ELEVATOR_STATE_STOP`: 엘리베이터 정지(문 열림/닫힘, 버튼 대기)
+    - `ELEVATOR_STATE_MOVING`: 엘리베이터 이동 중
+    - 상태 전이는 HAL_GPIO_EXTI_Callback에서만 처리됨
+
+
+<br>
+<br>
+<br>
 
 ## 초기상태 다이어그램
 
@@ -90,6 +110,11 @@ stateDiagram-v2
 5. **대기 상태 전환**: 현재 층 인식 완료 시 정지중상태로 전환하여 사용자 입력 대기
 
 
+<br>
+<br>
+<br>
+
+
 ## 운행중상태 다이어그램
 
 ```mermaid
@@ -122,6 +147,12 @@ stateDiagram-v2
 3. **이동 방향**: 내부 설정값(UP/DOWN)을 통해 이동 방향 결정
 4. **정지 조건**: 이동 중 해당 층 토글버튼이 ON 상태라면 해당 층에서 정지 후 Door Open
 5. **안전 제약**: 운행중 상태에서는 문이 항상 닫혀 있어야 하며, Door Open 이벤트 무시
+
+<br>
+<br>
+<br>
+
+
 
 ## 정지중상태 다이어그램
 
@@ -158,14 +189,6 @@ stateDiagram-v2
 6. **상태 전환 조건**: Door Closed 상태 확인 및 토글버튼 ON 감지 시 운행중상태로 전환
 
 
-
-
-
-
-
-
-
-
-
-
-
+<br>
+<br>
+<br>
