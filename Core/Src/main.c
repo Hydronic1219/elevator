@@ -66,6 +66,9 @@ void SystemClock_Config(void);
 
 //
 #define DEBOUNCE_DEREY 10
+
+
+
 //
 
 
@@ -110,7 +113,16 @@ uint16_t button_3f_toogle = BUTTON_TOOGLE_OFF;
 // #3.Door open/close : Open ([PA12] GPIO_PIN_12), Close ( [PA11] GPIO_PIN_11)
 #define DOOR_PIN_OPEN          GPIO_PIN_12
 #define DOOR_PIN_CLOSE         GPIO_PIN_11
-//bool isDoorPinFlag = false;
+
+#define OPEN_CLOSE_DELAY_MS 3000
+uint32_t doorCloseTicTime = 0;
+//return HAL_GetTick();
+
+//uint32_t millis() //뭔지 모르지만 32비트형 데이터를  반환
+//{
+//  return HAL_GetTick();
+//}
+
 
 // #1.Photo Event : 1F(GPIO_PIN_10), 2F(GPIO_PIN_3), 3F(GPIO_PIN_5)
 void gpio_pin_uart_log(uint16_t GPIO_Pin)
@@ -239,6 +251,39 @@ bool skip_check_debounce_button(uint16_t GPIO_Pin)
   return isRetSkip;
 }
 
+void fndOutPut()
+{
+  if (current_floor == FLOOR_PIN_1F){
+    moveCursor(0, 0);
+    lcdString("1F");
+    moveCursor(1, 0);
+    lcdString("B--");
+
+    ledOff(7);
+    ledOne();
+  }
+  else if (current_floor == FLOOR_PIN_2F){
+    moveCursor(0, 0);
+    lcdString("2F");
+    moveCursor(1, 0);
+    lcdString("B--");
+
+    ledOff(7);
+    ledTwo();
+
+  }
+  else if (current_floor == FLOOR_PIN_3F){
+    moveCursor(0, 0);
+    lcdString("3F");
+    moveCursor(1, 0);
+    lcdString("B--");
+
+    ledOff(7);
+    ledThree();
+
+  }
+}
+
 // [Received input Event]
 // #1.Photo Event : 1F( [PA10] : GPIO_PIN_10) , 2F([PB3] : GPIO_PIN_3), 3F([PB5] : GPIO_PIN_5)
 //    ==> ? 확인
@@ -277,10 +322,13 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
       const uint32_t ccr3_val = TIM3->CCR3;
 
       if (GPIO_Pin == DOOR_PIN_OPEN && ccr3_val != 25){
+        doorCloseTicTime = HAL_GetTick() + OPEN_CLOSE_DELAY_MS;
         TIM3->CCR3 = 25;  // 125
       }
       else if (GPIO_Pin == DOOR_PIN_CLOSE && ccr3_val != 125){
+        //isDoorInfoOutputFlag = true;
         TIM3->CCR3 = 125; // 125
+        doorCloseTicTime = 0;
       }
 
       //isDoorPinFlag = true;
@@ -353,7 +401,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     if(is_elevator_stop_transition_allowed) 
     {
       bool is1F_checked = (GPIO_Pin == FLOOR_PIN_1F) /*&& (button_1f_toogle == BUTTON_TOOGLE_ON)*/;
-      bool is2F_checked = (GPIO_Pin == FLOOR_PIN_2F) && (button_2f_toogle == BUTTON_TOOGLE_ON);
+      bool is2F_checked = (GPIO_Pin == FLOOR_PIN_2F) /*&& (button_2f_toogle == BUTTON_TOOGLE_ON)*/;
       bool is3F_checked = (GPIO_Pin == FLOOR_PIN_3F) /*&& (button_3f_toogle == BUTTON_TOOGLE_ON)*/;
 
       if (is1F_checked)
@@ -365,10 +413,15 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
       }
       else if (is2F_checked )
       {
-        current_elevator_state = ELEVATOR_STATE_STOP;
-        current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
         current_floor = GPIO_Pin;
-        button_2f_toogle = BUTTON_TOOGLE_OFF;
+
+        if (button_2f_toogle == BUTTON_TOOGLE_ON){
+          current_elevator_state = ELEVATOR_STATE_STOP;
+          current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+          button_2f_toogle = BUTTON_TOOGLE_OFF;
+        } else {
+          current_elevator_state_action = ELEVATOR_STATE_ACTION_START;
+        }
 
       }
       else if (is3F_checked)
@@ -429,11 +482,13 @@ int main(void)
 
   HAL_TIM_Base_Start(&htim11);
 
-//  uint32_t lastDebounceTime = 0;
-//  GPIO_PinState lastButtonState = GPIO_PIN_SET;
+  //  uint32_t lastDebounceTime = 0;
+  //  GPIO_PinState lastButtonState = GPIO_PIN_SET;
 
   HAL_TIM_PWM_Start(&htim3,TIM_CHANNEL_3);
   TIM3->CCR3 = 125; // 125
+
+  i2cLcd_Init();
 
   { /* 초기 설정값 넣기 */ 
     // 현재 동작 시작상태
@@ -469,13 +524,18 @@ int main(void)
           // (예) LCD 출력 등 //
           // LCD 출력 문구 ....
 
+//          moveCursor(0, 0);
+//          lcdString("A");
+//          moveCursor(1, 0);
+//          lcdString("B");
+
           // 엘리베이터 방향 지정
           current_move_state = MOVE_STATE_DOWN;
 
           // ELEVATOR_STATE_ACTION_PROGRESS 상태로 이동
           current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
           break;
-          
+
         case ELEVATOR_STATE_ACTION_PROGRESS:
           // 엘리베이터를 이동 함수호출
           moving_elevator();
@@ -489,13 +549,30 @@ int main(void)
         case ELEVATOR_STATE_ACTION_START:
           // NOTICE: INIT 상태에서 ONE Time 실행 되어야 되는 경우 여기서 처리 (예) LCD 출력 등 // 
           // (예) 도어 오픈 - 클로즈 명령 //
-          
+
+          fndOutPut();
+
+          // door open
+          doorCloseTicTime = HAL_GetTick() + OPEN_CLOSE_DELAY_MS;
+          TIM3->CCR3 = 25;  // 125
+
+
           // 엘리베이터 상하 이동을 위해 상태변경 
-          //current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
+          current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
           break;
-        
+
         case ELEVATOR_STATE_ACTION_PROGRESS:
           // door open closed 서보 모터 동작 처리 
+         {
+           const uint32_t ticTime = HAL_GetTick();
+           if(doorCloseTicTime != 0 && ticTime > doorCloseTicTime){
+             // dore
+             TIM3->CCR3 = 125; // 125
+             doorCloseTicTime = 0;
+           }
+         }
+
+
           break;
       }
     }
@@ -505,12 +582,11 @@ int main(void)
       {
         case ELEVATOR_STATE_ACTION_START:
           // 상태 변경 진입 시 한번만 호출
-        {
-          // log
-        }
+          fndOutPut();
+
           current_elevator_state_action = ELEVATOR_STATE_ACTION_PROGRESS;
-          break;
-        
+        break;
+
         case ELEVATOR_STATE_ACTION_PROGRESS:
           // 엘리베이터를 이동 함수호출
           moving_elevator();

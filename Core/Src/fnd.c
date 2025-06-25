@@ -10,17 +10,21 @@ FND_CONTROL fnd[7] =
 			{GPIOA, GPIO_PIN_5, 0 , 1},  //2
 			{GPIOA, GPIO_PIN_6, 0 , 1},	 //1
 			{GPIOA, GPIO_PIN_7, 0 , 1},  //9
-			{GPIOC, GPIO_PIN_11, 0 , 1},  //10
+			{GPIOC, GPIO_PIN_7, 0 , 1},  //10
 	};
 
 
 
-void ledOne(uint8_t num)
+void ledOne()
 {
-	for(uint8_t i=1; i < num; i++)
-	{
-		HAL_GPIO_WritePin(fnd[i].stmPort, fnd[i].number, fnd[i].on);
-	}
+  HAL_GPIO_WritePin(fnd[2].stmPort, fnd[2].number, fnd[2].on);
+  HAL_GPIO_WritePin(fnd[1].stmPort, fnd[1].number, fnd[1].on);
+
+
+	//for(uint8_t i=1; i < num; i++)
+	//{
+	//	HAL_GPIO_WritePin(fnd[i].stmPort, fnd[i].number, fnd[i].on);
+	//}
 }
 
 void ledTwo()

@@ -13,7 +13,7 @@ typedef struct
 }FND_CONTROL;
 
 
-void ledOne(uint8_t num);
+void ledOne();
 void ledTwo();
 void ledThree();
 void ledOff(uint8_t num);
