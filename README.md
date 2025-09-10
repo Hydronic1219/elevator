@@ -98,4 +98,4 @@ elevator_project/
 
 ## 🎥 시연 영상
 
-[![시연 영상](https://img.youtube.com/vi/영상ID/0.jpg)]
+[![시연 영상](https://youtube.com/shorts/E30i3ZkvgvY?si=ayuA2xYGPYM4vr73)]
